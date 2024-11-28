@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using TicTacToeEngine.Controllers;
+using TicTacToeEngine.Data;
 using TicTacToeEngine.Models;
 using TicTacToeEngine.Services;
 
@@ -14,6 +15,9 @@ var services = new ServiceCollection()
 var logger = services.GetRequiredService<ILoggerFactory>().CreateLogger("TicTacToeEngine");
 
 logger.LogInformation("application initialized.");
+
+var dbContext = new LiteDbContext("TicTacToeDatabase.db");
+logger.LogDebug("db initialized successfully");
 
 var board = new Board();
 var player1 = new Player { Name = "DérickAI", Symbol = 'X' };
