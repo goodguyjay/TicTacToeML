@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using TicTacToeEngine.Config;
 using TicTacToeEngine.Controllers;
 using TicTacToeEngine.Data;
+using TicTacToeEngine.Debug;
 using TicTacToeEngine.Helpers;
 using TicTacToeEngine.Models;
 using TicTacToeEngine.Services;
@@ -35,9 +36,20 @@ logger.LogDebug("database path: {databasePath}", databasePath);
 #endif
 
 var dbContext = new LiteDbContext(databasePath);
+var dbService = new LiteDbService(dbContext);
 
 #if DEBUG
 logger.LogDebug("db initialized successfully");
+
+Console.WriteLine("enter 'debugtools' for debugging menu or press enter to start the game");
+
+var input = Console.ReadLine();
+
+if (input?.ToLower() == "debugtools")
+{
+    DebugMenu.InitializeDebugMenu(dbService, logger);
+    return;
+}
 #endif
 
 var board = new Board();

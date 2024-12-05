@@ -1,6 +1,7 @@
 ﻿using LiteDB;
 using TicTacToeEngine.Config;
 using TicTacToeEngine.Helpers;
+using TicTacToeEngine.Models.Database;
 
 namespace TicTacToeEngine.Data;
 
@@ -23,10 +24,10 @@ public sealed class LiteDbContext
         }
 
         _database = new LiteDatabase(databasePath);
-
-        var testCollection = _database.GetCollection<TestEntity>("testCollection");
-        testCollection.Insert(new TestEntity { Message = "Hello, World!" });
     }
+
+    public ILiteCollection<Games> Games => _database.GetCollection<Games>("games");
+    public ILiteCollection<Moves> Moves => _database.GetCollection<Moves>("moves");
 
     public LiteDatabase Database => _database;
 }
