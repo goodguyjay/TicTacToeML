@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using TicTacToeEngine.Models;
+using TicTacToeEngine.Models.Database;
 using TicTacToeEngine.Services;
 
 namespace TicTacToeEngine.Controllers;
@@ -8,15 +9,18 @@ public sealed class GameController
 {
     private readonly ILogger _logger;
     private readonly GameService _gameService;
+    private readonly LiteDbService _dbService;
     private readonly Board _board;
     private readonly Player _player1;
     private readonly Player _player2;
 
     private int _turn;
+    private Guid _currentGameId;
 
     public GameController(
         ILogger logger,
         GameService gameService,
+        LiteDbService dbService,
         Board board,
         Player player1,
         Player player2
@@ -24,6 +28,7 @@ public sealed class GameController
     {
         _logger = logger;
         _gameService = gameService;
+        _dbService = dbService;
         _board = board;
         _player1 = player1;
         _player2 = player2;
@@ -35,6 +40,19 @@ public sealed class GameController
     public void StartGame()
     {
         _logger.LogInformation("game started.");
+
+        _currentGameId = Guid.NewGuid();
+
+        var game = new Games
+        {
+            GameId = _currentGameId,
+            Player1 = _player1.Name,
+            Player2 = _player2.Name,
+            Result = null,
+            Timestamp = null,
+        };
+
+        _dbService.AddGame(game);
 
         while (true)
         {
@@ -49,6 +67,8 @@ public sealed class GameController
             {
                 _logger.LogInformation("{playerName} wins!", currentPlayer.Name);
                 PrintBoard();
+
+                UpdateGameResult($"{currentPlayer.Name} wins");
                 break;
             }
 
@@ -56,6 +76,8 @@ public sealed class GameController
             {
                 _logger.LogInformation("the game is a draw!");
                 PrintBoard();
+
+                UpdateGameResult("draw");
                 break;
             }
 
@@ -95,6 +117,8 @@ public sealed class GameController
 
             _gameService.ApplyMove(_board, move);
 
+            LogMove(player, x, y);
+
             return true;
         }
         catch (Exception exception)
@@ -117,5 +141,34 @@ public sealed class GameController
 
             Console.WriteLine();
         }
+    }
+
+    private void LogMove(Player player, int x, int y)
+    {
+        var move = new Moves
+        {
+            MoveId = Guid.NewGuid(),
+            GameId = _currentGameId,
+            Player = player.Name,
+            Position = x * 3 + y,
+            BoardState = string.Join("", _board.Grid.Cast<char>()),
+            Timestamp = DateTime.UtcNow,
+        };
+
+        _dbService.AddMove(move);
+        _logger.LogInformation("move logged: {moveId}", move.MoveId);
+    }
+
+    private void UpdateGameResult(string result)
+    {
+        var game = _dbService.GetAllGames().FirstOrDefault(g => g.GameId == _currentGameId);
+
+        if (game == null)
+            return;
+
+        game.Result = result;
+        game.Timestamp = DateTime.UtcNow;
+        _dbService.AddGame(game);
+        _logger.LogInformation("game result updated: {result}", result);
     }
 }

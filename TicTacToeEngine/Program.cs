@@ -57,6 +57,6 @@ var player1 = new Player { Name = "DérickAI", Symbol = 'X' };
 var player2 = new Player { Name = "JayAI", Symbol = 'O' };
 
 var gameService = new GameService();
-var gameController = new GameController(logger, gameService, board, player1, player2);
+var gameController = new GameController(logger, gameService, dbService, board, player1, player2);
 
 gameController.StartGame();
